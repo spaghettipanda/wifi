@@ -5,7 +5,7 @@ Wifi's Pirate Ship is a modified copy of YAMS (Yet Another Media Server), a high
 - Website: [[https://yams.media][https://yams.media]]
 https://github.com/rogsme/yams
 
-*Notes*
+* Notes
 
 Can't Access qBittorrent because the credentials don't work?
 
