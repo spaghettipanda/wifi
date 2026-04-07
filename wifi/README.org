@@ -1,0 +1,6 @@
+#+title: WiFi's Pirate Ship
+
+Wifi's Pirate Ship is a modified copy of YAMS (Yet Another Media Server), a highly opinionated media server that simplifies the setup and management of your home media collection.
+
+- Website: [[https://yams.media][https://yams.media]]
+https://github.com/rogsme/yams

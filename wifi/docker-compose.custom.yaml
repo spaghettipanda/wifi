@@ -1,0 +1,83 @@
+networks:
+  default:
+    external: true
+    name: yams_network
+
+services:
+  # https://hub.docker.com/r/cloudflare/cloudflared
+  cloudflared:
+      image: cloudflare/cloudflared:latest
+      container_name: cloudflared
+      restart: unless-stopped
+      command: tunnel run --token ${TUNNEL_TOKEN}
+
+  # https://github.com/FlareSolverr/FlareSolverr
+  flaresolverr:
+    # DockerHub mirror flaresolverr/flaresolverr:latest
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOG_HTML=${LOG_HTML:-false}
+      - CAPTCHA_SOLVER=${CAPTCHA_SOLVER:-none}
+      - TZ=${TZ}
+    ports:
+      - "${PORT:-8191}:8191"
+    restart: unless-stopped 
+
+  # https://github.com/nandyalu/trailarr
+  trailarr:
+    image: nandyalu/trailarr:latest
+    container_name: trailarr
+    environment:
+      - TZ=${TZ}
+      # Add any other environment variables as needed.
+    volumes:
+      - ${INSTALL_DIRECTORY}/config/trailarr:/config # For Trailarr's database and logs
+      # Map your Radarr media folder(s)
+      - ${MEDIA_DIRECTORY}/movies:/mnt/movies
+      # Map your Sonarr media folder(s)
+      - ${MEDIA_DIRECTORY}/tvshows:/mnt/shows
+      # - ${MEDIA_DIRECTORY}:/tv
+      # Add more volume mappings if you have multiple Radarr/Sonarr instances
+      # or if your media is split across different locations.
+      # The path on the right (e.g., /media/movies, /media/tv) is how Trailarr will see these folders.
+      # The path on the left is the actual path on your Docker host system.
+    ports:
+      - "7889:7889" # Or choose a different host port if 7889 is taken, leave the right side as is
+    restart: unless-stopped
+    # Optional: Add labels, network, and other configuration as needed
+    command: >
+      sh -c "pip install tzdata && python3 /app/trailarr.py"
+
+  # https://homarr.dev/
+  homarr:
+    container_name: homarr
+    image: ghcr.io/homarr-labs/homarr:latest
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock # Optional, only if you want docker integration
+      - ${INSTALL_DIRECTORY}/config/appdata:/appdata
+    environment:
+      - SECRET_ENCRYPTION_KEY=118492fab1be3e1398af80f4d4b7f51b038fd6b15c218a37aafdc91346120441
+    ports:
+      - '7575:7575'
+  
+  # https://getdashdot.com/
+  dash:
+    image: mauricenino/dashdot:nvidia
+    restart: unless-stopped
+    privileged: true
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities:
+                - gpu
+    ports:
+      - '80:3001'
+    volumes:
+      - ${INSTALL_DIRECTORY}/config/${MEDIA_SERVICE}:/config/ro
+    environment:
+      DASHDOT_WIDGET_LIST: 'os,cpu,storage,ram,network,gpu'
+      DASHDOT_ENABLE_CPU_TEMPS: 'false'
